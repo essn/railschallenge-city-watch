@@ -12,13 +12,7 @@ class RespondersController < ApplicationController
   def index
     responders = Responder.all
 
-    if params[:show] == "capacity"
-      # all_fire_responders = Fire.all
-      # available_fire_responders = Fire.where(emergency_code: nil).length
-      # on_duty_fire_responders = Fire.where(on_duty: true).length
-      # on_duty_and_available_fire_responders = available_fire_responders + on_duty_fire_responders
- 
-
+    if params[:show] == "capacity" 
       render json: {
         capacity: {
           "Fire": [

@@ -13,10 +13,10 @@ class EmergenciesController < ApplicationController
     emergency = Emergency.create(emergency_params)
 
     if emergency.save
-      Responder.dispatch("Fire", params[:emergency][:fire_severity])
-      Responder.dispatch("Medical", params[:emergency][:medical_severity])
-      Responder.dispatch("Police", params[:emergency][:police_severity])
-      
+      Responder.dispatch("Fire", params[:emergency][:fire_severity], params[:emergency][:code])
+      Responder.dispatch("Medical", params[:emergency][:medical_severity], params[:emergency][:code])
+      Responder.dispatch("Police", params[:emergency][:police_severity], params[:emergency][:code])
+
       render json: emergency, status: 201
     else
       render json: { 'message' => emergency.errors }, status: 422
@@ -75,13 +75,5 @@ class EmergenciesController < ApplicationController
 
   def emergency_params
     params.require(:emergency).permit(:code, :police_severity, :medical_severity, :fire_severity, :resolved_at)
-  end
-
-  def dispatch_by_severity
-    get severity fire, medical, police
-
-    Fire.dispatch(severity)
-    Medical.dispatch(severity)
-    Police.dispatch(severity)
   end
 end

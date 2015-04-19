@@ -53,15 +53,47 @@ class Responder < ActiveRecord::Base
     capacity = self.available_responders(type) + self.on_duty_responders(type)
   end
 
-  def self.dispatch(type, severity, emergency)
-    severity = severity
+  def self.dispatch(type, severity, emergency_code)
+    if severity != 0
+      available_responders_desc = Object.const_get(type).where(emergency_code: nil).where(on_duty: true).all.order(capacity: :desc)
+      available_responders_asec = Object.const_get(type).where(emergency_code: nil).where(on_duty: true).all.order(capacity: :asec)
+      # .all should turn the relation into an array so I can use the array methods later, otherwise none of this works.........
+      severity_to_modify = severity
 
-    available_responders = Object.const_get(type).where(emergency_code: nil).where(on_duty: true).order(capacity: :desc)
-    
-    while severity - available_responders.first.capacity > 0
-      available_responders.first.emergency_code = emergency
+      if severity > available_responders.inject{ |sum,x| sum + x } # Sum of available responders capacities
 
-      available_responders.shift
+        available_responders.each do |resp|
+          resp.emergency_code = emergency_code
+        end
+
+      elsif severity >= available_responders_desc[0].capacity
+        i = 0
+
+        while severity_to_modify >= available_responders_desc[i].capacity
+          available_responders_desc[i].emergency_code = emergency_code
+          severity_to_modify -= available_responders_desc[i].capacity
+          i++
+        end
+
+        available_responders.reverse
+
+        i = 0
+
+        while severity_to_modify - available_responders[i].capacity > 0
+          available_responders[i] = emergency_code
+          severity_to_modify -= available_responders[i].capacity
+          i++
+        end
+      end
+
+    elsif severity =< available_responders_asec[0].capacity
+      i = 0
+
+      while severity_to_modify >= available_responders_asec[i].capacity
+        available_responders_asec[i].emergency_code = emergency_code
+        severity_to_modify -= available_responders_asec[i].capacity
+        i++
+      end
     end
   end
 
