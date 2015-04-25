@@ -6,8 +6,8 @@ class Dispatcher
     @medical_responders = Medical.where(on_duty: true).where(emergency_code: nil)
   end
 
-  def dispatch_responders
-
+  def dispatch(type)
+    
   end
 
   def no_responders?
@@ -23,7 +23,7 @@ class Dispatcher
   end
 
   def fire_responders
-    capable_responders = @fire_responders.where(capacity: (severity..5)).order(capacity: :desc)
+    capable_responders = @fire_responders.where(capacity: (@emergency.fire_severity..5)).order(capacity: :desc)
     severity_to_modify = @emergency.fire_severity
 
     i = 0
@@ -35,11 +35,44 @@ class Dispatcher
     end
   end
 
-  def police_responder
+  def police_responders
+    capable_responders = @police_responders.where(capacity: (@emergency.police_severity..5)).order(capacity: :desc)
+    severity_to_modify = @emergency.police_severity
 
+    i = 0
+
+    while severity_to_modify >= capable_responders[i].capacity && severity_to_modify > 0
+      capable_responders[i].update_attributes(emergency_code: @emergency.code)
+      severity_to_modify -= severity_to_modify
+      i += 1
+    end
   end
 
-  def medical_responder
+  def medical_responders
+    capable_responders = @medical_responders.where(capacity: (@emergency.medical_severity..5)).order(capacity: :desc)
+    severity_to_modify = @emergency.medical_severity
 
+    i = 0
+
+    while severity_to_modify >= capable_responders[i].capacity && severity_to_modify > 0
+      capable_responders[i].update_attributes(emergency_code: @emergency.code)
+      severity_to_modify -= severity_to_modify
+      i += 1
+    end
+  end
+
+  def parse_responders(responders, severity)
+
+    def initialize
+      responders = responders
+      severity_to_modify = severity
+    end
+
+    remainders = {}
+
+    responders.each do |responder|
+      rem = responder.capacity % severity_to_modify
+      remainders.store(responder.id, rem)
+    end
   end
 end
