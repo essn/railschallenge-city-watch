@@ -1,78 +1,44 @@
 class Dispatcher
   def initialize(emergency)
     @emergency = emergency
-    @fire_responders = Fire.where(on_duty: true).where(emergency_code: nil)
-    @police_responders = Police.where(on_duty: true).where(emergency_code: nil)
-    @medical_responders = Medical.where(on_duty: true).where(emergency_code: nil)
+    @responders_collection = { 
+      "Fire" => Fire.where(on_duty: true).where(emergency_code: nil),
+      "Police" => Police.where(on_duty: true).where(emergency_code: nil),
+      "Medical" => Medical.where(on_duty: true).where(emergency_code: nil)
+    }
+    @severity_collection = {
+      "Fire" => @emergency.fire_severity,
+      "Police" => @emergency.police_severity,
+      "Medical" => @emergency.medical_severity
+    }
   end
 
-  def dispatch(type)
-    
-  end
-
-  def no_responders?
+  def no_severity?
     ( @emergency.fire_severity.zero? &&
     @emergency.medical_severity.zero? &&
     @emergency.police_severity.zero? )
   end
 
   def all_responders?
-    ( @emergency.fire_severity > @fire_responders.sum(:capacity) && 
-      @emergency.medical_severity > @medical_responders.sum(:capacity) &&
-      @emergency.police_severity > @police_responders.sum(:capacity) )
+    ( @emergency.fire_severity > @responders_collection.values_at("Fire")[0].sum(:capacity) && 
+      @emergency.medical_severity > @responders_collection.values_at("Medical")[0].sum(:capacity) &&
+      @emergency.police_severity > @responders_collection..values_at("Police")[0].sum(:capacity) )
   end
 
-  def fire_responders
-    capable_responders = @fire_responders.where(capacity: (@emergency.fire_severity..5)).order(capacity: :desc)
-    severity_to_modify = @emergency.fire_severity
+  def responders(type)
+    responders = @responders_collection.values_at(type)[0].order(capacity: :desc)
+    severity = @severity_collection.values_at(type)[0]
 
-    i = 0
-
-    while severity_to_modify >= capable_responders[i].capacity && severity_to_modify > 0
-      capable_responders[i].update_attributes(emergency_code: @emergency.code)
-      severity_to_modify -= severity_to_modify
-      i += 1
+    if responders.where(capacity: severity).exists?
+      responders.where(capacity: severity).first.update_attributes(emergency_code: @emergency.code)
+    else
+      sum = 0
+      responders.each do |responder|
+        next if responder.capacity + sum > severity
+        sum += responder.capacity
+        responder.update_attributes(emergency_code: @emergency.code)
+        break if sum >= severity
+      end
     end
   end
-
-  def police_responders
-    capable_responders = @police_responders.where(capacity: (@emergency.police_severity..5)).order(capacity: :desc)
-    severity_to_modify = @emergency.police_severity
-
-    i = 0
-
-    while severity_to_modify >= capable_responders[i].capacity && severity_to_modify > 0
-      capable_responders[i].update_attributes(emergency_code: @emergency.code)
-      severity_to_modify -= severity_to_modify
-      i += 1
-    end
-  end
-
-  def medical_responders
-    capable_responders = @medical_responders.where(capacity: (@emergency.medical_severity..5)).order(capacity: :desc)
-    severity_to_modify = @emergency.medical_severity
-
-    i = 0
-
-    while severity_to_modify >= capable_responders[i].capacity && severity_to_modify > 0
-      capable_responders[i].update_attributes(emergency_code: @emergency.code)
-      severity_to_modify -= severity_to_modify
-      i += 1
-    end
-  end
-
-  def parse_responders(responders, severity)
-
-    def initialize
-      responders = responders
-      severity_to_modify = severity
-    end
-
-    remainders = {}
-
-    responders.each do |responder|
-      rem = responder.capacity % severity_to_modify
-      remainders.store(responder.id, rem)
-    end
-  end
-end
+endƒ

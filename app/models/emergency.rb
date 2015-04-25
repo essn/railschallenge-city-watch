@@ -24,8 +24,10 @@ class Emergency < ActiveRecord::Base
   def dispatch
     dispatcher = Dispatcher.new(self)
 
-    dispatcher.fire_responders
-    dispatcher.police_responders
-    dispatcher.medical_responders
+    unless dispatcher.no_severity?
+      dispatcher.responders("Fire") unless self.fire_severity.zero?
+      dispatcher.responders("Police") unless self.police_severity.zero?
+      dispatcher.responders("Police" unless self.medical_severity.zero?
+    end
   end
 end
