@@ -20,7 +20,12 @@ class EmergenciesController < ApplicationController
   end
 
   def index
-    render json: Emergency.all
+    emergencies = Emergency.all
+    render json:
+      {
+        emergencies: emergencies,
+        full_responses: Emergency.full_responses
+      },  each_serializer: EmergencySerializer, status: 200
   end
 
   def show
@@ -29,7 +34,7 @@ class EmergenciesController < ApplicationController
     if emergency
       render json: emergency, serializer: EmergencySerializer, status: 201
     else
-      render json: { 'message' => 'record not found' }, status: 404
+      render json: { message: 'record not found' }, status: 404
     end
   end
 

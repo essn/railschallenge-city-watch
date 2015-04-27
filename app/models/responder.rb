@@ -19,40 +19,31 @@ class Responder < ActiveRecord::Base
 
   before_save :default_on_duty
 
-  belongs_to :emergency, :primary_key => "code", :foreign_key => "emergency_code"
+  belongs_to :emergency, primary_key: 'code', foreign_key: 'emergency_code'
 
   def self.all_responders(type)
-    capacity = 0
-
-    Object.const_get(type).all.each do |type|
-      capacity += type.capacity
-    end
-
-    capacity
+    type.constantize.all.sum(:capacity)
   end
 
   def self.available_responders(type)
-    capacity = 0
-
-    Object.const_get(type).where(emergency_code: nil).each do |type|
-      capacity += type.capacity
-    end
-
-    capacity
+    type.constantize.where(emergency_code: nil).sum(:capacity)
   end
 
   def self.on_duty_responders(type)
-    capacity = 0
-
-    Object.const_get(type).where(on_duty: true).each do |type|
-        capacity += type.capacity
-    end
-
-    capacity
+    type.constantize.where(on_duty: true).sum(:capacity)
   end
 
-  def self.available_and_on_duty_responders(type)
-    capacity = self.available_responders(type) + self.on_duty_responders(type)
+  def self.available_on_duty_responders
+    where(emergency: nil, on_duty: true).sum(:capacity)
+  end
+
+  def self.responders(type)
+    [
+      all_responders(type),
+      available_responders(type),
+      on_duty_responders(type),
+      available_on_duty_responders
+    ]
   end
 
   private

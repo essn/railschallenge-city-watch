@@ -12,27 +12,12 @@ class RespondersController < ApplicationController
   def index
     responders = Responder.all
 
-    if params[:show] == "capacity" 
+    if params[:show] == 'capacity'
       render json: {
         capacity: {
-          "Fire": [
-            Responder.all_responders("Fire"),
-            Responder.available_responders("Fire"),
-            Responder.on_duty_responders("Fire"),
-            Responder.available_and_on_duty_responders("Fire")
-            ],
-          "Police": [
-            Responder.all_responders("Police"),
-            Responder.available_responders("Police"),
-            Responder.on_duty_responders("Police"),
-            Responder.available_and_on_duty_responders("Police")
-            ],
-          "Medical": [
-            Responder.all_responders("Medical"),
-            Responder.available_responders("Medical"),
-            Responder.on_duty_responders("Medical"),
-            Responder.available_and_on_duty_responders("Medical")
-            ]
+          'Fire': Responder.responders('Fire'),
+          'Police': Responder.responders('Police'),
+          'Medical': Responder.responders('Medical')
         }
       }
     else
